@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette, carried over 1:1 from the design tokens in the reference sketch */
+  --color-cream: #fff8f0;
+  --color-orange: #ff9f43;
+  --color-sky: #87ceeb;
+  --color-peach: #ffe4cc;
+  --color-paleblue: #e0f0f8;
+
+  --color-warm-50: #fef5ec;
+  --color-warm-100: #ffe8d4;
+  --color-warm-200: #ffd0a8;
+  --color-warm-300: #ffb07a;
+  --color-warm-400: #ff9f43;
+  --color-warm-500: #f08720;
+  --color-warm-600: #d46a0e;
+
+  --color-sky-50: #f0f8fc;
+  --color-sky-100: #d8eef8;
+  --color-sky-200: #b8dff0;
+  --color-sky-300: #87ceeb;
+  --color-sky-400: #5cb8e0;
+
+  --font-vazir: var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-bento:
+    0 2px 16px rgba(255, 159, 67, 0.06), 0 1px 4px rgba(0, 0, 0, 0.03);
+  --shadow-bento-hover:
+    0 8px 32px rgba(255, 159, 67, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-card:
+    0 1px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 159, 67, 0.04);
+  --shadow-card-hover:
+    0 12px 40px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(255, 159, 67, 0.08);
+  --shadow-soft:
+    0 4px 24px rgba(135, 206, 235, 0.1), 0 1px 6px rgba(0, 0, 0, 0.03);
+  --shadow-glow: 0 0 40px rgba(255, 159, 67, 0.12);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-blob: blobMorph 12s ease-in-out infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes blobMorph {
+    0%,
+    100% {
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+      transform: translate(0, 0);
+    }
+    25% {
+      border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+      transform: translate(10px, -10px);
+    }
+    50% {
+      border-radius: 50% 60% 30% 60% / 30% 40% 70% 50%;
+      transform: translate(-5px, 5px);
+    }
+    75% {
+      border-radius: 60% 40% 60% 30% / 70% 30% 50% 60%;
+      transform: translate(5px, 8px);
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: rgb(255 159 67 / 20%);
+  color: #b84a00;
+}
+
+/* Custom scrollbar, kept out of @theme since it targets pseudo-elements directly */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(255 159 67 / 25%);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 159 67 / 40%);
+}
+
+.divider-gradient {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 159 67 / 15%) 20%,
+    rgb(135 206 235 / 15%) 50%,
+    rgb(255 159 67 / 15%) 80%,
+    transparent 100%
+  );
+}
+
+.glass-badge {
+  background: rgb(255 255 255 / 82%);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
