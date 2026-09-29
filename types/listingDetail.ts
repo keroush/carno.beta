@@ -56,6 +56,8 @@ export interface ListingSpec {
 
 export interface ListingDetail {
   id: number;
+  /** Null for old listings created before slugs existed — fall back to `id` for links in that case. */
+  slug: string | null;
   title: string;
   year: number;
   price: number;
@@ -89,10 +91,13 @@ export interface ListingDetail {
   contact: { phone: string; tel_link: string };
 
   views_count: number;
+  /** Only accurate when the request carried a valid Authorization header; false for guests. */
+  is_saved: boolean;
 }
 
 export interface RelatedListingSummary {
   id: number;
+  slug: string | null;
   title: string;
   year: number;
   price: number;
@@ -101,6 +106,7 @@ export interface RelatedListingSummary {
   mileage: number | null;
   city: string;
   cover_image: string;
+  is_saved: boolean;
   created_at: string;
 }
 
