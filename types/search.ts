@@ -27,6 +27,11 @@ export interface FuelTypeOption {
   name: string;
 }
 
+export interface BodyTypeOption {
+  id: number;
+  name: string;
+}
+
 export interface ColorOption {
   id: number;
   name: string;
@@ -51,9 +56,9 @@ export type SortOptionValue = "newest" | "price_asc" | "price_desc" | "mileage_a
  * GET /api/search/filters. Confirmed (not inferred) shape per the search API
  * doc: `brands` and `provinces` are Laravel API Resources and wrapped in
  * `{ data: [...] }`; the rest (fuel_types, colors, paintwork_statuses,
- * usage_types, sale_types, sort_options) are bare arrays. This asymmetry is
- * called out explicitly in the doc as deliberate, not a bug — don't "fix" it
- * into a uniform shape.
+ * body_types, usage_types, sale_types, sort_options) are bare arrays. This
+ * asymmetry is called out explicitly in the doc as deliberate, not a bug.
+ * Don't trust it blindly though — see lib/normalizeSearchFilters.ts.
  */
 export interface SearchFiltersResponse {
   brands: { data: BrandOption[] };
@@ -61,6 +66,7 @@ export interface SearchFiltersResponse {
   fuel_types: FuelTypeOption[];
   colors: ColorOption[];
   paintwork_statuses: PaintworkStatusOption[];
+  body_types: BodyTypeOption[];
   usage_types: CodedOption<SearchUsageType>[];
   sale_types: CodedOption<SearchSaleType>[];
   sort_options: CodedOption<SortOptionValue>[];
@@ -69,7 +75,8 @@ export interface SearchFiltersResponse {
 /** Shared ListingCardResource shape — used by search/listings, search/hero, and the landing page's ad sections. */
 export interface SearchListingCard {
   id: number;
-  slug?: string;
+  /** Null for old listings created before slugs existed — fall back to `id` for links in that case. */
+  slug: string | null;
   title: string;
   year: number;
   price: number;
@@ -78,6 +85,8 @@ export interface SearchListingCard {
   mileage: number | null;
   city: string;
   cover_image: string;
+  /** Only accurate when the request carried a valid Authorization header; false for guests. */
+  is_saved: boolean;
   created_at: string;
 }
 
@@ -117,7 +126,18 @@ export interface SearchListingsQuery {
   mileage_max?: number;
   colors?: number[];
   fuel_types?: number[];
+  body_types?: number[];
   sort?: SortOptionValue;
   page?: number;
   per_page?: number;
+}
+
+/** GET /api/search/suggestions — autocomplete search *terms*, not listings. Wired up in a later part. */
+export interface SearchSuggestion {
+  text: string;
+  listings_count: number;
+}
+
+export interface SearchSuggestionsResponse {
+  suggestions: SearchSuggestion[];
 }
