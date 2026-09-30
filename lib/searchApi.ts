@@ -1,15 +1,29 @@
 import "server-only";
 import { ApiError, parseJsonResponse } from "@/lib/apiError";
-import type { SearchFiltersResponse, SearchListingsQuery, SearchListingsResponse } from "@/types/search";
+import type {
+  SearchFiltersResponse,
+  SearchListingsQuery,
+  SearchListingsResponse,
+  SearchSuggestionsResponse,
+} from "@/types/search";
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "https://auto-gallery.amlakemoon.com/api";
 
-async function callApi<T>(path: string): Promise<T> {
+/**
+ * `token` is always optional here — every endpoint in this file is public.
+ * But `search/listings` and `search/hero` both read an optional Authorization
+ * header to populate `is_saved` accurately for a logged-in caller; omitting
+ * it just means `is_saved` comes back `false` for every item, per the doc.
+ */
+async function callApi<T>(path: string, token?: string): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_BASE_URL}${path}`, {
       method: "GET",
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       // Both search endpoints are explicitly documented as never cached —
       // /listings due to query-string variety, /filters technically could be
       // cached (it only changes when an admin adds a brand/color), but the
@@ -49,6 +63,7 @@ function buildQueryString(query: SearchListingsQuery): string {
   appendScalar("mileage_max", query.mileage_max);
   appendArray("colors", query.colors);
   appendArray("fuel_types", query.fuel_types);
+  appendArray("body_types", query.body_types);
   appendScalar("sort", query.sort);
   appendScalar("page", query.page);
   appendScalar("per_page", query.per_page);
@@ -60,12 +75,18 @@ export function getSearchFilters(): Promise<SearchFiltersResponse> {
   return callApi("/search/filters");
 }
 
-export function getSearchListings(query: SearchListingsQuery): Promise<SearchListingsResponse> {
+export function getSearchListings(query: SearchListingsQuery, token?: string): Promise<SearchListingsResponse> {
   const qs = buildQueryString(query);
-  return callApi(`/search/listings${qs ? `?${qs}` : ""}`);
+  return callApi(`/search/listings${qs ? `?${qs}` : ""}`, token);
 }
 
-export function getSearchHero(q: string, page = 1, perPage = 20): Promise<SearchListingsResponse> {
+export function getSearchHero(q: string, page = 1, perPage = 20, token?: string): Promise<SearchListingsResponse> {
   const params = new URLSearchParams({ q, page: String(page), per_page: String(perPage) });
-  return callApi(`/search/hero?${params.toString()}`);
+  return callApi(`/search/hero?${params.toString()}`, token);
+}
+
+/** Autocomplete search *terms* (not listings) — GET /api/search/suggestions. Wired up in a later part. */
+export function getSearchSuggestions(q: string): Promise<SearchSuggestionsResponse> {
+  const params = new URLSearchParams({ q });
+  return callApi(`/search/suggestions?${params.toString()}`);
 }
