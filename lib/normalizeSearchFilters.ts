@@ -1,4 +1,5 @@
 import type {
+  BodyTypeOption,
   BrandOption,
   CodedOption,
   ColorOption,
@@ -17,6 +18,7 @@ export interface NormalizedSearchFilters {
   fuelTypes: FuelTypeOption[];
   colors: ColorOption[];
   paintworkStatuses: PaintworkStatusOption[];
+  bodyTypes: BodyTypeOption[];
   usageTypes: CodedOption<SearchUsageType>[];
   saleTypes: CodedOption<SearchSaleType>[];
   sortOptions: CodedOption<SortOptionValue>[];
@@ -50,6 +52,7 @@ export function normalizeSearchFiltersResponse(raw: unknown): NormalizedSearchFi
     fuelTypes: unwrapArray<FuelTypeOption>(source.fuel_types),
     colors: unwrapArray<ColorOption>(source.colors),
     paintworkStatuses: unwrapArray<PaintworkStatusOption>(source.paintwork_statuses),
+    bodyTypes: unwrapArray<BodyTypeOption>(source.body_types),
     usageTypes: unwrapArray<CodedOption<SearchUsageType>>(source.usage_types),
     saleTypes: unwrapArray<CodedOption<SearchSaleType>>(source.sale_types),
     sortOptions: unwrapArray<CodedOption<SortOptionValue>>(source.sort_options),
