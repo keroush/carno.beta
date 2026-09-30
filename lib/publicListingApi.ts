@@ -22,18 +22,29 @@ function normalizeRelatedListings(raw: unknown): RelatedListingSummary[] {
 }
 
 /**
- * GET /api/listings/{id} is public but has a side effect — every call records
- * a view. `cache: "no-store"` is load-bearing here, not a default: the doc is
- * explicit that this must never be cached, or view counts (and staleness)
- * break. Only call this from a page that's actually being viewed, never for
- * prefetch/preview.
+ * GET /api/listings/{idOrSlug} is public but has a side effect — every call
+ * records a view. `cache: "no-store"` is load-bearing here, not a default:
+ * the doc is explicit that this must never be cached, or view counts (and
+ * staleness) break. Only call this from a page that's actually being
+ * viewed, never for prefetch/preview.
+ *
+ * The endpoint now accepts either a numeric id or a slug — the server
+ * figures out which from whether the value parses as a number, so this
+ * function doesn't need to distinguish them itself.
+ *
+ * `token` is optional (the endpoint doesn't require auth) but when present
+ * it's what makes `listing.is_saved` / `related_listings[].is_saved` reflect
+ * the actual logged-in user's bookmarks rather than always coming back false.
  */
-export async function getListingDetail(id: string): Promise<ListingDetailResponse> {
+export async function getListingDetail(idOrSlug: string, token?: string): Promise<ListingDetailResponse> {
   let res: Response;
   try {
-    res = await fetch(`${API_BASE_URL}/listings/${id}`, {
+    res = await fetch(`${API_BASE_URL}/listings/${idOrSlug}`, {
       method: "GET",
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       cache: "no-store",
     });
   } catch {
