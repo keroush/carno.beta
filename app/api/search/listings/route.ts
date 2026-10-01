@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ApiError } from "@/lib/apiError";
 import { getSearchListings } from "@/lib/searchApi";
+import { getSessionToken } from "@/lib/requireSession";
 import type { SearchListingsQuery, SearchUsageType, SortOptionValue } from "@/types/search";
 
 function getIntArray(searchParams: URLSearchParams, key: string): number[] | undefined {
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
     mileage_max: getInt(searchParams, "mileage_max"),
     colors: getIntArray(searchParams, "colors"),
     fuel_types: getIntArray(searchParams, "fuel_types"),
+    body_types: getIntArray(searchParams, "body_types"),
     sort: (searchParams.get("sort") as SortOptionValue | null) ?? undefined,
     page: getInt(searchParams, "page"),
     per_page: getInt(searchParams, "per_page"),
@@ -40,8 +42,12 @@ export async function GET(request: Request) {
 
   if (query.usage_type?.length === 0) query.usage_type = undefined;
 
+  // Optional — populates is_saved correctly for a logged-in caller, but this
+  // endpoint works fine without it too (is_saved just comes back false).
+  const token = await getSessionToken();
+
   try {
-    const result = await getSearchListings(query);
+    const result = await getSearchListings(query, token ?? undefined);
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof ApiError) {
