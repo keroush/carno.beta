@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BookmarkButton } from "@/components/BookmarkButton";
 import { CalendarIcon, GaugeIcon, PinIcon } from "@/components/CardMetaIcons";
 import { formatKilometers, formatPriceToman, formatRelativeTime, toPersianDigits } from "@/lib/persianNumber";
 import { USAGE_TYPE_TAG_CLASS, type CarUsageType } from "@/lib/usageType";
@@ -14,7 +15,7 @@ export function RelatedListingCard({ listing }: { listing: RelatedListingSummary
 
   return (
     <Link
-      href={`/listings/${listing.id}`}
+      href={`/listings/${listing.slug ?? listing.id}`}
       className="shadow-card hover:shadow-card-hover group block overflow-hidden rounded-[20px] border border-transparent bg-white transition-all duration-300 hover:border-orange/10"
     >
       <div className="relative h-40 overflow-hidden">
@@ -28,6 +29,13 @@ export function RelatedListingCard({ listing }: { listing: RelatedListingSummary
         <span className={`absolute top-2.5 left-2.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${tagClass}`}>
           {listing.usage_type_label}
         </span>
+        <BookmarkButton
+          label={`ذخیره ${listing.title}`}
+          variant="glass"
+          className="absolute top-2.5 right-2.5 h-8 w-8 bg-white/90 shadow-sm"
+          listingId={listing.id}
+          initialSaved={listing.is_saved}
+        />
       </div>
       <div className="p-4">
         <h3 className="mb-1.5 text-sm font-bold text-stone-800">{listing.title}</h3>
