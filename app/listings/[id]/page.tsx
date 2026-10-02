@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -19,6 +20,7 @@ import { RelatedListingCard } from "@/components/listing-detail/RelatedListingCa
 import { MobileContactBar } from "@/components/listing-detail/MobileContactBar";
 import { ApiError } from "@/lib/apiError";
 import { getListingDetail } from "@/lib/publicListingApi";
+import { SESSION_COOKIE_NAME } from "@/lib/sessionCookie";
 import {
   formatKilometers,
   formatPriceToman,
@@ -51,10 +53,12 @@ export default async function ListingDetailPage({
   params,
 }: ListingDetailPageProps) {
   const { id } = await params;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
   let data;
   try {
-    data = await getListingDetail(id);
+    data = await getListingDetail(id, token);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       notFound();
@@ -127,6 +131,7 @@ export default async function ListingDetailPage({
                     label={`ذخیره ${listing.title}`}
                     className="h-10 w-10 flex-shrink-0"
                     listingId={listing.id}
+                    initialSaved={listing.is_saved}
                   />
                 </div>
 
