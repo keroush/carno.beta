@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { FilterSidebar } from "@/components/search/FilterSidebar";
@@ -11,6 +12,7 @@ import {
 } from "@/lib/searchApi";
 import { normalizeSearchFiltersResponse } from "@/lib/normalizeSearchFilters";
 import { toPersianDigits } from "@/lib/persianNumber";
+import { SESSION_COOKIE_NAME } from "@/lib/sessionCookie";
 import type {
   SearchListingsQuery,
   SearchUsageType,
@@ -63,6 +65,7 @@ export default async function ListingsPage({
     mileage_max: toInt(params.mileage_max),
     colors: toIntArray(params["colors[]"]),
     fuel_types: toIntArray(params["fuel_types[]"]),
+    body_types: toIntArray(params["body_types[]"]),
     sort:
       typeof params.sort === "string"
         ? (params.sort as SortOptionValue)
@@ -72,6 +75,11 @@ export default async function ListingsPage({
 
   const rawFilters = await getSearchFilters();
   const filters = normalizeSearchFiltersResponse(rawFilters);
+
+  // Optional — populates is_saved correctly for a logged-in visitor; the
+  // endpoints work fine as guests too (is_saved just comes back false).
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
   // search/listings doesn't support a free-text `q` param yet (per the doc) —
   // when the hero search bar sends one, use search/hero instead so the query
@@ -88,12 +96,13 @@ export default async function ListingsPage({
     query.year_max !== undefined ||
     query.mileage_max !== undefined ||
     (query.colors?.length ?? 0) > 0 ||
-    (query.fuel_types?.length ?? 0) > 0;
+    (query.fuel_types?.length ?? 0) > 0 ||
+    (query.body_types?.length ?? 0) > 0;
 
   const results =
     q.length >= 2 && !hasStructuredFilters
-      ? await getSearchHero(q, page)
-      : await getSearchListings(query);
+      ? await getSearchHero(q, page, 20, token)
+      : await getSearchListings(query, token);
 
   return (
     <>
