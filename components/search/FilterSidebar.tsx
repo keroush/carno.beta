@@ -33,6 +33,7 @@ interface FilterState {
   mileageMax: string;
   colorIds: number[];
   fuelTypeIds: number[];
+  bodyTypeIds: number[];
   sort: SortOptionValue | "";
 }
 
@@ -122,6 +123,10 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
     initialQuery.mileage_max ? String(initialQuery.mileage_max) : "",
   );
   const [colorIds, setColorIds] = useState<number[]>(initialQuery.colors ?? []);
+  const [bodyTypeIds, setBodyTypeIds] = useState<number[]>(
+    initialQuery.body_types ?? [],
+  );
+  const [bodyTypesExpanded, setBodyTypesExpanded] = useState(false);
   const [fuelTypeIds, setFuelTypeIds] = useState<number[]>(
     initialQuery.fuel_types ?? [],
   );
@@ -162,6 +167,7 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
       mileageMax,
       colorIds,
       fuelTypeIds,
+      bodyTypeIds,
       sort,
     };
   }
@@ -182,6 +188,9 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
     state.colorIds.forEach((id) => params.append("colors[]", String(id)));
     state.fuelTypeIds.forEach((id) =>
       params.append("fuel_types[]", String(id)),
+    );
+    state.bodyTypeIds.forEach((id) =>
+      params.append("body_types[]", String(id)),
     );
     if (state.sort) params.set("sort", state.sort);
 
@@ -267,6 +276,11 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
     const next = fuelTypeIds.filter((id) => id !== fuelId);
     setFuelTypeIds(next);
     navigateWithFilters({ fuelTypeIds: next });
+  }
+  function removeBodyTypeChip(bodyTypeId: number) {
+    const next = bodyTypeIds.filter((id) => id !== bodyTypeId);
+    setBodyTypeIds(next);
+    navigateWithFilters({ bodyTypeIds: next });
   }
 
   // Curated quick-access chips always show a placeholder when inactive
@@ -394,6 +408,21 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
         onRemove: () => removeColorChip(color.id),
       }),
     );
+
+  if (bodyTypeIds.length === 0) {
+    chips.push({ id: "body-type", label: "نوع بدنه", active: false });
+  } else {
+    filters.bodyTypes
+      .filter((bodyType) => bodyTypeIds.includes(bodyType.id))
+      .forEach((bodyType) =>
+        chips.push({
+          id: `body-type-${bodyType.id}`,
+          label: bodyType.name,
+          active: true,
+          onRemove: () => removeBodyTypeChip(bodyType.id),
+        }),
+      );
+  }
 
   filters.fuelTypes
     .filter((fuel) => fuelTypeIds.includes(fuel.id))
@@ -690,6 +719,15 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
           )}
         </div>
       )}
+
+      <CheckboxList
+        label="نوع بدنه"
+        items={filters.bodyTypes}
+        selected={bodyTypeIds}
+        onToggle={(id) => setBodyTypeIds((prev) => toggleInArray(prev, id))}
+        expanded={bodyTypesExpanded}
+        onExpandChange={setBodyTypesExpanded}
+      />
 
       {filters.fuelTypes.length > 0 && (
         <div>
