@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -37,12 +38,24 @@ function isKnownUsageType(value: string): value is CarUsageType {
   return value === "zero" || value === "used" || value === "pre_sale";
 }
 
+/**
+ * generateMetadata and the page both need this listing. The endpoint records
+ * a view on *every* call (see lib/publicListingApi.ts), so fetching it
+ * separately in each would count one visit as two views. React's `cache()`
+ * shares a single call per request — both callers must pass identical args.
+ */
+const loadListing = cache((idOrSlug: string, token: string | undefined) =>
+  getListingDetail(idOrSlug, token),
+);
+
 export async function generateMetadata({
   params,
 }: ListingDetailPageProps): Promise<Metadata> {
   const { id } = await params;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   try {
-    const { listing } = await getListingDetail(id);
+    const { listing } = await loadListing(id, token);
     return { title: `${listing.title} — کارنو` };
   } catch {
     return { title: "آگهی — کارنو" };
@@ -58,7 +71,7 @@ export default async function ListingDetailPage({
 
   let data;
   try {
-    data = await getListingDetail(id, token);
+    data = await loadListing(id, token);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       notFound();
