@@ -1,4 +1,4 @@
-import type { SearchListingsResponse, SearchSuggestion } from "@/types/search";
+import type { SearchSuggestion } from "@/types/search";
 
 export class SearchApiError extends Error {
   readonly status: number;
@@ -8,15 +8,6 @@ export class SearchApiError extends Error {
     this.status = status;
     this.name = "SearchApiError";
   }
-}
-
-export async function searchHero(q: string, signal?: AbortSignal): Promise<SearchListingsResponse> {
-  const res = await fetch(`/api/search/hero?q=${encodeURIComponent(q)}`, { signal });
-  const data = (await res.json()) as SearchListingsResponse & { message?: string };
-  if (!res.ok) {
-    throw new SearchApiError(res.status, data.message ?? "جستجو با خطا مواجه شد.");
-  }
-  return data;
 }
 
 /**
