@@ -1,7 +1,14 @@
+import { SocialIcon } from "@/components/SocialIcon";
+import { getSocialLinks } from "@/lib/socialLinksApi";
+import { isTelLink, linkTitle } from "@/lib/socialLinks";
+import { toPersianDigits } from "@/lib/persianNumber";
+
 const serviceLinks = ["خرید خودرو", "فروش خودرو", "اجاره بلندمدت", "مقایسه خودرو"];
 const companyLinks = ["درباره ما", "تماس با ما", "قوانین و مقررات", "حریم خصوصی"];
 
-export function Footer() {
+export async function Footer() {
+  const links = await getSocialLinks();
+
   return (
     <footer className="border-t border-stone-100/80 py-14">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
@@ -49,7 +56,30 @@ export function Footer() {
           <div>
             <h4 className="mb-4 text-sm font-bold text-stone-800">تماس</h4>
             <ul className="space-y-2.5 text-xs text-stone-400">
-              <li>۰۲۱-۴۵۶۷۸۹۰۰</li>
+              {links.length > 0 ? (
+                links.map((link) => {
+                  const isTel = isTelLink(link);
+                  return (
+                    <li key={`${link.id}-${link.url}`}>
+                      <a
+                        href={link.url}
+                        {...(isTel ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+                        className="flex flex-wrap items-center gap-x-2 gap-y-0.5 transition-colors hover:text-orange"
+                      >
+                        <SocialIcon platform={link.platform} className="h-4 w-4 flex-shrink-0" />
+                        <span>{linkTitle(link)}</span>
+                        {isTel && (
+                          <span dir="ltr" className="text-stone-300">
+                            {toPersianDigits(link.value)}
+                          </span>
+                        )}
+                      </a>
+                    </li>
+                  );
+                })
+              ) : (
+                <li>۰۲۱-۴۵۶۷۸۹۰۰</li>
+              )}
               <li>support@karno.ir</li>
               <li>تهران، خیابان ولیعصر</li>
             </ul>

@@ -19,9 +19,12 @@ import { ListingGallery } from "@/components/listing-detail/ListingGallery";
 import { SpecList } from "@/components/listing-detail/SpecList";
 import { RelatedListingCard } from "@/components/listing-detail/RelatedListingCard";
 import { MobileContactBar } from "@/components/listing-detail/MobileContactBar";
+import { ContactSellerButton } from "@/components/listing-detail/ContactSellerButton";
 import { ApiError } from "@/lib/apiError";
 import { getListingDetail } from "@/lib/publicListingApi";
 import { SESSION_COOKIE_NAME } from "@/lib/sessionCookie";
+import { getSocialLinks } from "@/lib/socialLinksApi";
+import { fallbackPhoneLink } from "@/lib/socialLinks";
 import {
   formatKilometers,
   formatPriceToman,
@@ -69,6 +72,9 @@ export default async function ListingDetailPage({
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
+  // Kicked off now so it runs in parallel with the listing request; never rejects.
+  const socialLinksPromise = getSocialLinks();
+
   let data;
   try {
     data = await loadListing(id, token);
@@ -94,6 +100,10 @@ export default async function ListingDetailPage({
   }
 
   const { listing, related_listings } = data;
+
+  // If the social-links endpoint is down/empty, still offer the site-wide phone from the listing response.
+  const socialLinks = await socialLinksPromise;
+  const contactLinks = socialLinks.length > 0 ? socialLinks : [fallbackPhoneLink(listing.contact)];
   const usageTagClass = isKnownUsageType(listing.usage_type)
     ? USAGE_TYPE_TAG_CLASS[listing.usage_type]
     : "bg-white/90 text-stone-700 shadow-sm";
@@ -188,7 +198,7 @@ export default async function ListingDetailPage({
                 </div>
               </div>
 
-              <MobileContactBar telLink={listing.contact.tel_link} />
+              <MobileContactBar links={contactLinks} />
 
               {listing.description && (
                 <div className="shadow-card rounded-[20px] border border-transparent bg-white p-6">
@@ -226,12 +236,7 @@ export default async function ListingDetailPage({
                   تماس با کارنو
                 </p>
                 <p className="mb-4 text-xs text-stone-400">پشتیبانی ۲۴ ساعته</p>
-                <a
-                  href={listing.contact.tel_link}
-                  className="block w-full rounded-xl bg-orange px-5 py-3 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5"
-                >
-                  تماس با فروشنده
-                </a>
+                <ContactSellerButton links={contactLinks} />
               </div>
 
               <div className="shadow-card rounded-[20px] border border-transparent bg-white p-5">
