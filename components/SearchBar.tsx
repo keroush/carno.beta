@@ -23,11 +23,20 @@ export function SearchBar() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Picking a suggestion fills the input with its text — that must not kick
   // off another suggestions lookup (and re-open the dropdown) for that text.
-  const skipNextFetchRef = useRef(false);
+  // Stored as the picked *text* and compared by value rather than a boolean
+  // flag: if the pick doesn't actually change the input (the text was already
+  // typed), no effect runs, and a boolean would stay armed and silently
+  // swallow the user's next real edit.
+  const skipLookupForRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (skipNextFetchRef.current) {
-      skipNextFetchRef.current = false;
+    const skipFor = skipLookupForRef.current;
+    skipLookupForRef.current = null;
+    if (skipFor !== null && skipFor === query) {
+      // The previous run's cleanup already aborted any pending/in-flight
+      // lookup, so the loading state it set must be cleared here too —
+      // otherwise the spinner would be stuck on.
+      setIsLoading(false);
       return undefined;
     }
 
@@ -85,7 +94,7 @@ export function SearchBar() {
   }
 
   function selectSuggestion(text: string) {
-    skipNextFetchRef.current = true;
+    skipLookupForRef.current = text;
     setQuery(text);
     goToResults(text);
   }
