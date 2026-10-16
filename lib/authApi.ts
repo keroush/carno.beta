@@ -39,10 +39,20 @@ export function requestOtp(mobile: string): Promise<OtpRequestSuccess> {
   });
 }
 
-export function verifyOtp(mobile: string, code: string): Promise<OtpVerifySuccess> {
+/** Only needed for a number that has no account yet — the server ignores it for returning users. */
+export interface NewUserName {
+  firstName: string;
+  lastName: string;
+}
+
+export function verifyOtp(mobile: string, code: string, name?: NewUserName): Promise<OtpVerifySuccess> {
   return callAuthApi<OtpVerifySuccess>("/otp/verify", {
     method: "POST",
-    body: JSON.stringify({ mobile, code }),
+    body: JSON.stringify({
+      mobile,
+      code,
+      ...(name ? { first_name: name.firstName, last_name: name.lastName } : {}),
+    }),
   });
 }
 
