@@ -4,7 +4,7 @@ import type { ListingDetail } from "@/types/listingDetail";
 import type {
   MyAdApiStatus,
   MyListingSummary,
-  NationalCodeUser,
+  ProfileUser,
   Paginated,
   SavedListingEntry,
   SupportTicketDetail,
@@ -64,11 +64,15 @@ export function unsaveListing(token: string, listingId: number): Promise<{ messa
   return callApi(`/user/saved-listings/${listingId}`, { method: "DELETE", token });
 }
 
-export function setNationalCode(token: string, nationalCode: string): Promise<{ message: string; user: NationalCodeUser }> {
-  return callApi("/user/profile/national-code", {
+export function updateProfileName(
+  token: string,
+  firstName: string,
+  lastName: string,
+): Promise<{ message: string; user: ProfileUser }> {
+  return callApi("/user/profile/name", {
     method: "PUT",
     token,
-    body: JSON.stringify({ national_code: nationalCode }),
+    body: JSON.stringify({ first_name: firstName, last_name: lastName }),
   });
 }
 

@@ -54,10 +54,10 @@ export interface SavedListingEntry {
   listing: SavedListingRef;
 }
 
-export interface NationalCodeUser {
+/** User object returned by PUT /user/profile/name. (The API still echoes a `national_code`, but it's always null and unused.) */
+export interface ProfileUser {
   id: number;
   mobile: string;
-  national_code: string;
   first_name: string | null;
   last_name: string | null;
   city: { id: number; name: string } | null;

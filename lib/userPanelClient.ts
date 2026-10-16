@@ -1,5 +1,5 @@
 import type {
-  NationalCodeUser,
+  ProfileUser,
   Paginated,
   SavedListingEntry,
   SupportTicketDetail,
@@ -50,10 +50,10 @@ export const userPanelApi = {
     request<{ message: string }>(`/api/user/saved-listings/${listingId}`, { method: "DELETE" }),
   getSavedListings: (page = 1) => request<Paginated<SavedListingEntry>>(`/api/user/saved-listings?page=${page}`),
 
-  setNationalCode: (nationalCode: string) =>
-    request<{ message: string; user: NationalCodeUser }>("/api/user/profile/national-code", {
+  updateProfileName: (firstName: string, lastName: string) =>
+    request<{ message: string; user: ProfileUser }>("/api/user/profile/name", {
       method: "PUT",
-      body: JSON.stringify({ national_code: nationalCode }),
+      body: JSON.stringify({ first_name: firstName, last_name: lastName }),
     }),
 
   getSupportTickets: (page = 1) => request<Paginated<SupportTicketSummary>>(`/api/support/tickets?page=${page}`),

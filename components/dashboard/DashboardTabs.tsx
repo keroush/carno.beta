@@ -7,7 +7,7 @@ import type { DashboardTab } from "@/types/dashboard-tabs";
 const tabs: { id: DashboardTab; label: string }[] = [
   { id: "my-ads", label: "آگهی‌های من" },
   { id: "saved", label: "آگهی‌های ذخیره شده" },
-  { id: "verification", label: "احراز هویت" },
+  { id: "verification", label: "اطلاعات کاربری" },
   { id: "support", label: "تماس با پشتیبانی" },
 ];
 
