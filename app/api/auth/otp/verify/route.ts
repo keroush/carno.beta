@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { AuthApiError, verifyOtp } from "@/lib/authApi";
+import { validateNames } from "@/lib/nameValidation";
 import { setSessionCookie } from "@/lib/sessionCookie";
 
 interface RequestBody {
@@ -9,9 +10,6 @@ interface RequestBody {
   first_name?: unknown;
   last_name?: unknown;
 }
-
-const NAME_MIN = 2;
-const NAME_MAX = 80;
 
 function readName(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -36,16 +34,8 @@ export async function POST(request: Request) {
   const hasName = firstName.length > 0 || lastName.length > 0;
 
   if (hasName) {
-    const errors: Record<string, string[]> = {};
-    if (firstName.length === 0) errors.first_name = ["وارد کردن نام الزامی است."];
-    else if (firstName.length < NAME_MIN || firstName.length > NAME_MAX) {
-      errors.first_name = [`نام باید بین ${NAME_MIN} تا ${NAME_MAX} کاراکتر باشد.`];
-    }
-    if (lastName.length === 0) errors.last_name = ["وارد کردن نام خانوادگی الزامی است."];
-    else if (lastName.length < NAME_MIN || lastName.length > NAME_MAX) {
-      errors.last_name = [`نام خانوادگی باید بین ${NAME_MIN} تا ${NAME_MAX} کاراکتر باشد.`];
-    }
-    if (Object.keys(errors).length > 0) {
+    const errors = validateNames(firstName, lastName);
+    if (errors) {
       return NextResponse.json({ message: "نام یا نام خانوادگی نامعتبر است.", errors }, { status: 422 });
     }
   }

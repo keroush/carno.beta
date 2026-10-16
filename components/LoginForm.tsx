@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { NAME_MAX, validateName } from "@/lib/nameValidation";
 import { useSessionStore } from "@/lib/store";
 
 type Step = "mobile" | "otp";
@@ -27,16 +28,6 @@ interface OtpVerifyResponse {
 
 const MOBILE_PATTERN = /^09\d{9}$/;
 const CODE_PATTERN = /^\d{5}$/;
-const NAME_MIN = 2;
-const NAME_MAX = 80;
-
-function validateName(value: string, label: string): string | null {
-  if (value.length === 0) return `وارد کردن ${label} الزامی است.`;
-  if (value.length < NAME_MIN || value.length > NAME_MAX) {
-    return `${label} باید بین ۲ تا ۸۰ کاراکتر باشد.`;
-  }
-  return null;
-}
 
 function useCountdown(initialSeconds: number) {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
