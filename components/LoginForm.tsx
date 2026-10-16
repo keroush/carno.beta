@@ -22,10 +22,21 @@ interface OtpVerifyResponse {
     first_name: string | null;
     last_name: string | null;
   };
+  errors?: Record<string, string[]>;
 }
 
 const MOBILE_PATTERN = /^09\d{9}$/;
 const CODE_PATTERN = /^\d{5}$/;
+const NAME_MIN = 2;
+const NAME_MAX = 80;
+
+function validateName(value: string, label: string): string | null {
+  if (value.length === 0) return `وارد کردن ${label} الزامی است.`;
+  if (value.length < NAME_MIN || value.length > NAME_MAX) {
+    return `${label} باید بین ۲ تا ۸۰ کاراکتر باشد.`;
+  }
+  return null;
+}
 
 function useCountdown(initialSeconds: number) {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
@@ -60,11 +71,24 @@ export function LoginForm() {
   const [mobileError, setMobileError] = useState<string | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Sign-up only. The API alone knows whether a number is new, and it won't say
+  // so up front — so these fields stay hidden for a normal login and are
+  // revealed only after the API answers that a name is required.
+  const [needsName, setNeedsName] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [firstNameError, setFirstNameError] = useState<string | null>(null);
+  const [lastNameError, setLastNameError] = useState<string | null>(null);
   const codeInputRef = useRef<HTMLInputElement | null>(null);
+  const firstNameInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (step === "otp") codeInputRef.current?.focus();
   }, [step]);
+
+  useEffect(() => {
+    if (needsName) firstNameInputRef.current?.focus();
+  }, [needsName]);
 
   async function submitMobile(mobileValue: string) {
     if (!MOBILE_PATTERN.test(mobileValue)) {
@@ -129,18 +153,49 @@ export function LoginForm() {
       return;
     }
 
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    if (needsName) {
+      const firstErr = validateName(trimmedFirstName, "نام");
+      const lastErr = validateName(trimmedLastName, "نام خانوادگی");
+      setFirstNameError(firstErr);
+      setLastNameError(lastErr);
+      if (firstErr || lastErr) return;
+    }
+
     setCodeError(null);
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobile, code }),
+        body: JSON.stringify({
+          mobile,
+          code,
+          ...(needsName ? { first_name: trimmedFirstName, last_name: trimmedLastName } : {}),
+        }),
       });
       const data = (await res.json()) as OtpVerifyResponse;
 
       if (!res.ok) {
-        setCodeError(data.message ?? "کد تایید نامعتبر یا منقضی شده است.");
+        const errors = data.errors;
+        const nameRejected = res.status === 422 && Boolean(errors?.first_name || errors?.last_name);
+
+        if (nameRejected) {
+          // This number has no account yet. The API checks the name *before*
+          // consuming the code, so the same code is still good — no new SMS needed.
+          if (needsName) {
+            setFirstNameError(errors?.first_name?.[0] ?? null);
+            setLastNameError(errors?.last_name?.[0] ?? null);
+          } else {
+            // First time we learn it: just reveal the fields (no red "required" errors yet).
+            setNeedsName(true);
+          }
+          setCodeError(errors?.code?.[0] ?? null);
+          return;
+        }
+
+        setCodeError(errors?.code?.[0] ?? data.message ?? "کد تایید نامعتبر یا منقضی شده است.");
         return;
       }
 
@@ -171,6 +226,11 @@ export function LoginForm() {
     setCode("");
     setCodeError(null);
     setDebugCode(null);
+    setNeedsName(false);
+    setFirstName("");
+    setLastName("");
+    setFirstNameError(null);
+    setLastNameError(null);
   }
 
   return (
@@ -192,12 +252,14 @@ export function LoginForm() {
           </svg>
         </div>
         <h1 className="text-xl font-bold text-stone-800">
-          {step === "mobile" ? "ورود به کارنو" : "کد تایید را وارد کنید"}
+          {step === "mobile" ? "ورود به کارنو" : needsName ? "تکمیل ثبت‌نام" : "کد تایید را وارد کنید"}
         </h1>
         <p className="mt-1.5 text-xs text-stone-400">
           {step === "mobile"
             ? "شماره موبایل خود را وارد کنید تا کد تایید برایتان ارسال شود"
-            : `کد ۵ رقمی ارسال شده به ${mobile}`}
+            : needsName
+              ? "این شماره هنوز حساب کاربری ندارد. برای ساخت حساب، نام و نام خانوادگی خود را وارد کنید."
+              : `کد ۵ رقمی ارسال شده به ${mobile}`}
         </p>
       </div>
 
@@ -272,6 +334,53 @@ export function LoginForm() {
             )}
           </div>
 
+          {needsName && (
+            <div className="space-y-3 rounded-2xl border border-orange/15 bg-warm-50/40 p-4">
+              <p className="text-xs leading-relaxed text-stone-500">
+                نیازی به دریافت دوباره کد نیست؛ فقط نام خود را وارد کنید.
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="firstName" className="mb-1.5 block text-xs font-medium text-stone-500">
+                    نام
+                  </label>
+                  <input
+                    id="firstName"
+                    ref={firstNameInputRef}
+                    type="text"
+                    autoComplete="given-name"
+                    maxLength={NAME_MAX}
+                    value={firstName}
+                    onChange={(event) => {
+                      setFirstName(event.target.value);
+                      setFirstNameError(null);
+                    }}
+                    className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors focus:border-orange/40"
+                  />
+                  {firstNameError && <p className="mt-1.5 text-xs text-red-500">{firstNameError}</p>}
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="mb-1.5 block text-xs font-medium text-stone-500">
+                    نام خانوادگی
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    autoComplete="family-name"
+                    maxLength={NAME_MAX}
+                    value={lastName}
+                    onChange={(event) => {
+                      setLastName(event.target.value);
+                      setLastNameError(null);
+                    }}
+                    className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors focus:border-orange/40"
+                  />
+                  {lastNameError && <p className="mt-1.5 text-xs text-red-500">{lastNameError}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
           {debugCode && (
             <div className="rounded-xl border border-dashed border-orange/30 bg-warm-50/60 px-4 py-2.5 text-center text-xs text-warm-600">
               کد تست (فقط محیط توسعه):{" "}
@@ -286,7 +395,7 @@ export function LoginForm() {
             disabled={isSubmitting}
             className="w-full rounded-xl bg-orange px-5 py-3 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "در حال بررسی..." : "تایید و ورود"}
+            {isSubmitting ? "در حال بررسی..." : needsName ? "ثبت‌نام و ورود" : "تایید و ورود"}
           </button>
 
           <div className="flex items-center justify-between text-xs">
