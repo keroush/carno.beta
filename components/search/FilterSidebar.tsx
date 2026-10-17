@@ -7,9 +7,9 @@ import {
   formatPriceToman,
   toPersianDigits,
 } from "@/lib/persianNumber";
+import { CheckboxOptionList, ColorOptionList } from "@/components/search/FilterOptionList";
 import type { NormalizedSearchFilters } from "@/lib/normalizeSearchFilters";
 import type {
-  CarModelOption,
   SearchListingsQuery,
   SearchUsageType,
   SortOptionValue,
@@ -44,7 +44,6 @@ interface FilterChip {
   onRemove?: () => void;
 }
 
-const VISIBLE_LIMIT = 6;
 
 function formatWithCommas(digitsOnly: string): string {
   if (!digitsOnly) return "";
@@ -126,7 +125,6 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
   const [bodyTypeIds, setBodyTypeIds] = useState<number[]>(
     initialQuery.body_types ?? [],
   );
-  const [bodyTypesExpanded, setBodyTypesExpanded] = useState(false);
   const [fuelTypeIds, setFuelTypeIds] = useState<number[]>(
     initialQuery.fuel_types ?? [],
   );
@@ -134,9 +132,6 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
     initialQuery.sort ?? "",
   );
 
-  const [brandsExpanded, setBrandsExpanded] = useState(false);
-  const [modelsExpanded, setModelsExpanded] = useState(false);
-  const [colorsExpanded, setColorsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const availableModels = useMemo(
@@ -435,59 +430,6 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
       }),
     );
 
-  function CheckboxList<T extends { id: number; name: string }>({
-    label,
-    items,
-    selected,
-    onToggle,
-    expanded,
-    onExpandChange,
-  }: {
-    label: string;
-    items: T[];
-    selected: number[];
-    onToggle: (id: number) => void;
-    expanded: boolean;
-    onExpandChange: (value: boolean) => void;
-  }) {
-    if (items.length === 0) return null;
-    const visibleItems = expanded ? items : items.slice(0, VISIBLE_LIMIT);
-    const remaining = items.length - VISIBLE_LIMIT;
-
-    return (
-      <div>
-        <p className="mb-2 text-xs font-bold text-stone-700">{label}</p>
-        <div className="grid grid-cols-2 gap-2">
-          {visibleItems.map((item) => (
-            <label
-              key={item.id}
-              className="flex items-center gap-2 text-xs text-stone-600"
-            >
-              <input
-                type="checkbox"
-                checked={selected.includes(item.id)}
-                onChange={() => onToggle(item.id)}
-                className="h-3.5 w-3.5 rounded border-stone-300 text-orange focus:ring-orange/30"
-              />
-              {item.name}
-            </label>
-          ))}
-        </div>
-        {remaining > 0 && (
-          <button
-            type="button"
-            onClick={() => onExpandChange(!expanded)}
-            className="mt-2 text-[11px] font-semibold text-orange hover:text-warm-500"
-          >
-            {expanded
-              ? "نمایش کمتر"
-              : `نمایش ${toPersianDigits(remaining)} مورد بیشتر`}
-          </button>
-        )}
-      </div>
-    );
-  }
-
   const fieldsContent = (
     <div className="space-y-6">
       {filters.sortOptions.length > 0 && (
@@ -538,22 +480,13 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
         </div>
       )}
 
-      <CheckboxList
-        label="برند"
-        items={filters.brands}
-        selected={brandIds}
-        onToggle={handleBrandToggle}
-        expanded={brandsExpanded}
-        onExpandChange={setBrandsExpanded}
-      />
+      <CheckboxOptionList label="برند" items={filters.brands} selected={brandIds} onToggle={handleBrandToggle} />
 
-      <CheckboxList<CarModelOption>
+      <CheckboxOptionList
         label="مدل"
         items={availableModels}
         selected={modelIds}
         onToggle={(id) => setModelIds((prev) => toggleInArray(prev, id))}
-        expanded={modelsExpanded}
-        onExpandChange={setModelsExpanded}
       />
 
       {filters.provinces.length > 0 && (
@@ -674,59 +607,17 @@ export function FilterSidebar({ filters, initialQuery }: FilterSidebarProps) {
         />
       </div>
 
-      {filters.colors.length > 0 && (
-        <div>
-          <p className="mb-2 text-xs font-bold text-stone-700">رنگ بدنه</p>
-          <div className="flex flex-wrap gap-2">
-            {(colorsExpanded
-              ? filters.colors
-              : filters.colors.slice(0, VISIBLE_LIMIT)
-            ).map((color) => {
-              const isSelected = colorIds.includes(color.id);
-              return (
-                <button
-                  key={color.id}
-                  type="button"
-                  onClick={() =>
-                    setColorIds((prev) => toggleInArray(prev, color.id))
-                  }
-                  title={color.name}
-                  className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] ${
-                    isSelected
-                      ? "border-orange/30 bg-orange/10 text-orange"
-                      : "border-stone-200 text-stone-600"
-                  }`}
-                >
-                  <span
-                    className="h-3 w-3 rounded-full border border-stone-200"
-                    style={{ backgroundColor: color.hex_code }}
-                  />
-                  {color.name}
-                </button>
-              );
-            })}
-          </div>
-          {filters.colors.length > VISIBLE_LIMIT && (
-            <button
-              type="button"
-              onClick={() => setColorsExpanded((prev) => !prev)}
-              className="mt-2 text-[11px] font-semibold text-orange hover:text-warm-500"
-            >
-              {colorsExpanded
-                ? "نمایش کمتر"
-                : `نمایش ${toPersianDigits(filters.colors.length - VISIBLE_LIMIT)} مورد بیشتر`}
-            </button>
-          )}
-        </div>
-      )}
+      <ColorOptionList
+        colors={filters.colors}
+        selected={colorIds}
+        onToggle={(id) => setColorIds((prev) => toggleInArray(prev, id))}
+      />
 
-      <CheckboxList
+      <CheckboxOptionList
         label="نوع بدنه"
         items={filters.bodyTypes}
         selected={bodyTypeIds}
         onToggle={(id) => setBodyTypeIds((prev) => toggleInArray(prev, id))}
-        expanded={bodyTypesExpanded}
-        onExpandChange={setBodyTypesExpanded}
       />
 
       {filters.fuelTypes.length > 0 && (
