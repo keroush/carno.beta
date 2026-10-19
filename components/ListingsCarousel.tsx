@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ListingCard } from "@/components/ListingCard";
 import { ShowAllCard } from "@/components/ShowAllCard";
-import { useFreeDragCarousel } from "@/components/useFreeDragCarousel";
+import { useDragCarousel } from "@/components/useDragCarousel";
 import type { CarListing } from "@/types/listing";
 
 interface ListingsCarouselProps {
@@ -11,45 +10,24 @@ interface ListingsCarouselProps {
   showAllHref: string;
 }
 
-function getSlidesPerView(width: number): number {
-  if (width >= 1280) return 4.2;
-  if (width >= 1024) return 3.3;
-  if (width >= 640) return 2.3;
-  return 1.25;
-}
+/**
+ * Slide width is pure CSS (how many cards fit): ~1.7 on phones so the next card
+ * clearly peeks in, then 2.3 / 3.3 / 4.2. The drag hook measures the result, so
+ * there's no JS copy of these numbers to keep in sync.
+ */
+const SLIDE_BASIS =
+  "shrink-0 grow-0 basis-[calc(100%/1.7)] sm:basis-[calc(100%/2.3)] lg:basis-[calc(100%/3.3)] xl:basis-[calc(100%/4.2)]";
 
 export function ListingsCarousel({
   listings,
   showAllHref,
 }: ListingsCarouselProps) {
-  const [slidesPerView, setSlidesPerView] = useState(4.2);
-
   // Real ads, plus one trailing "show all" slide.
   const totalSlides = listings.length + 1;
-  const maxSlide = Math.max(0, totalSlides - 1);
-  const slideWidthPercent = 100 / slidesPerView;
 
-  const {
-    offsetPercent,
-    isDragging,
-    activeIndex,
-    stepBy,
-    canGoPrev,
-    canGoNext,
-    dragHandlers,
-  } = useFreeDragCarousel({
-    slideWidthPercent,
-    maxSlideIndex: maxSlide,
+  const { trackProps, activeIndex, stepBy, canGoPrev, canGoNext } = useDragCarousel({
+    slideCount: totalSlides,
   });
-
-  useEffect(() => {
-    function handleResize() {
-      setSlidesPerView(getSlidesPerView(window.innerWidth));
-    }
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   return (
     <div className="relative">
@@ -58,7 +36,7 @@ export function ListingsCarousel({
         onClick={() => stepBy(-1)}
         aria-label="آگهی قبلی"
         disabled={!canGoPrev}
-        className="shadow-bento absolute -right-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-stone-400 transition-all duration-300 hover:text-orange disabled:opacity-40 lg:-right-4"
+        className="shadow-bento absolute -right-1 top-[84px] z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-stone-400 transition-all duration-300 hover:text-orange disabled:opacity-40 sm:top-1/2 sm:h-11 sm:w-11 lg:-right-4"
       >
         <svg
           className="h-5 w-5"
@@ -75,7 +53,7 @@ export function ListingsCarousel({
         onClick={() => stepBy(1)}
         aria-label="آگهی بعدی"
         disabled={!canGoNext}
-        className="shadow-bento absolute -left-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-stone-400 transition-all duration-300 hover:text-orange disabled:opacity-40 lg:-left-4"
+        className="shadow-bento absolute -left-1 top-[84px] z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-stone-400 transition-all duration-300 hover:text-orange disabled:opacity-40 sm:top-1/2 sm:h-11 sm:w-11 lg:-left-4"
       >
         <svg
           className="h-5 w-5"
@@ -94,26 +72,13 @@ export function ListingsCarousel({
 
       <div className="overflow-hidden py-3 pb-10">
         <div
-          className={`flex ${dragHandlers.className} ${isDragging ? "" : "transition-transform duration-500 ease-out"}`}
-          style={{
-            transform: `translateX(${offsetPercent}%)`,
-            ...dragHandlers.style,
-          }}
-          onPointerDown={dragHandlers.onPointerDown}
-          onPointerMove={dragHandlers.onPointerMove}
-          onPointerUp={dragHandlers.onPointerUp}
-          onPointerCancel={dragHandlers.onPointerCancel}
-          onPointerLeave={dragHandlers.onPointerLeave}
-          onDragStart={dragHandlers.onDragStart}
+          {...trackProps}
+          className="flex cursor-grab select-none active:cursor-grabbing [&_a]:[-webkit-user-drag:none] [&_img]:[-webkit-user-drag:none]"
         >
           {listings.map((listing, index) => {
             const isActive = index === activeIndex;
             return (
-              <div
-                key={listing.id}
-                style={{ flex: `0 0 ${slideWidthPercent}%` }}
-                className="px-0.8"
-              >
+              <div key={listing.id} className={`${SLIDE_BASIS} px-0.8`}>
                 <div
                   className={`h-full origin-center transition-all duration-500 ease-out ${
                     isActive ? "pl-1 z-10 scale-[1]" : "scale-[0.95] opacity-80"
@@ -125,10 +90,7 @@ export function ListingsCarousel({
             );
           })}
 
-          <div
-            style={{ flex: `0 0 ${slideWidthPercent}%` }}
-            className="px-2 sm:px-2.5"
-          >
+          <div className={`${SLIDE_BASIS} px-2 sm:px-2.5`}>
             <div
               className={`h-full origin-center transition-all duration-500 ease-out ${
                 activeIndex === listings.length
