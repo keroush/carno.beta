@@ -7,7 +7,7 @@ export function ListingsSection() {
   return (
     <section id="listings" className="pt-10 bg-white/80">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
-        <div className="mb-10 flex items-center justify-between">
+        <div className="mb-10 flex items-center justify-between gap-3">
           <div>
             <h2 className="mb-1 text-2xl font-black text-stone-800 sm:text-2xl">
               جدیدترین آگهی‌ها
@@ -18,7 +18,7 @@ export function ListingsSection() {
           </div>
           <Link
             href="/listings"
-            className="group hidden items-center gap-1.5 text-sm font-semibold text-orange transition-colors hover:text-warm-500 sm:flex"
+            className="group flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap text-sm font-semibold text-orange transition-colors hover:text-warm-500"
           >
             مشاهده همه
             <svg
