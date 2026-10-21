@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ListingCard } from "@/components/ListingCard";
 import { ShowAllCard } from "@/components/ShowAllCard";
-import { useFreeDragCarousel } from "@/components/useFreeDragCarousel";
+import { useDragCarousel } from "@/components/useDragCarousel";
 import type { AdCategoryTab, CarListing } from "@/types/listing";
 
 interface FeaturedAdsCarouselProps {
@@ -24,50 +24,29 @@ const tabDefs: { id: AdCategoryTab; label: string }[] = [
   { id: "luxury", label: "لوکس" },
 ];
 
-function getSlidesPerView(width: number): number {
-  if (width >= 1024) return 3;
-  if (width >= 640) return 2;
-  return 1;
-}
+/**
+ * Slide width is pure CSS: ~1.7 cards on phones (the next one clearly peeks in),
+ * 2 from sm, 3 from lg. The drag hook measures the result — no JS copy to keep in sync.
+ */
+const SLIDE_BASIS = "min-w-0 shrink-0 grow-0 basis-[calc(100%/1.7)] sm:basis-1/2 lg:basis-1/3";
 
 export function FeaturedAdsCarousel({ adsByTab }: FeaturedAdsCarouselProps) {
   const [activeTab, setActiveTab] = useState<AdCategoryTab>("new");
-  const [slidesPerView, setSlidesPerView] = useState(3);
   const [isHovering, setIsHovering] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const ads = adsByTab[activeTab];
   // Real ads, plus one trailing "show all" slide.
   const totalSlides = ads.length + 1;
-  const maxSlide = Math.max(0, totalSlides - slidesPerView);
-  const slideWidthPercent = 100 / slidesPerView;
 
-  const {
-    offsetPercent,
-    isDragging,
-    activeIndex,
-    goToIndex,
-    stepBy,
-    canGoPrev,
-    canGoNext,
-    dragHandlers,
-  } = useFreeDragCarousel({
-    slideWidthPercent,
-    maxSlideIndex: maxSlide,
+  const { trackProps, isDragging, goToIndex, stepBy, canGoPrev, canGoNext } = useDragCarousel({
+    slideCount: totalSlides,
   });
 
-  useEffect(() => {
-    function handleResize() {
-      setSlidesPerView(getSlidesPerView(window.innerWidth));
-    }
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   const advance = useCallback(() => {
-    goToIndex(activeIndex < maxSlide ? activeIndex + 1 : 0);
-  }, [activeIndex, goToIndex, maxSlide]);
+    if (canGoNext) stepBy(1);
+    else goToIndex(0);
+  }, [canGoNext, stepBy, goToIndex]);
 
   useEffect(() => {
     if (isHovering || isDragging) return undefined;
@@ -119,7 +98,7 @@ export function FeaturedAdsCarousel({ adsByTab }: FeaturedAdsCarouselProps) {
           onClick={() => stepBy(-1)}
           aria-label="آگهی قبلی"
           disabled={!canGoPrev}
-          className="shadow-bento absolute -right-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-stone-400 transition-all duration-300 hover:text-orange disabled:opacity-40 lg:-right-4"
+          className="shadow-bento absolute -right-1 top-[72px] z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-stone-400 transition-all duration-300 hover:text-orange disabled:opacity-40 sm:top-1/2 sm:h-11 sm:w-11 lg:-right-4"
         >
           <svg
             className="h-5 w-5"
@@ -140,7 +119,7 @@ export function FeaturedAdsCarousel({ adsByTab }: FeaturedAdsCarouselProps) {
           onClick={() => stepBy(1)}
           aria-label="آگهی بعدی"
           disabled={!canGoNext}
-          className="shadow-bento absolute -left-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-stone-400 transition-all duration-300 hover:text-orange disabled:opacity-40 lg:-left-4"
+          className="shadow-bento absolute -left-1 top-[72px] z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-stone-400 transition-all duration-300 hover:text-orange disabled:opacity-40 sm:top-1/2 sm:h-11 sm:w-11 lg:-left-4"
         >
           <svg
             className="h-5 w-5"
@@ -159,27 +138,15 @@ export function FeaturedAdsCarousel({ adsByTab }: FeaturedAdsCarouselProps) {
 
         <div className="overflow-hidden rounded-[28px]">
           <div
-            className={`flex ${dragHandlers.className} ${isDragging ? "" : "transition-transform duration-500 ease-out"}`}
-            style={{
-              transform: `translateX(${offsetPercent}%)`,
-              ...dragHandlers.style,
-            }}
-            onPointerDown={dragHandlers.onPointerDown}
-            onPointerMove={dragHandlers.onPointerMove}
-            onPointerUp={dragHandlers.onPointerUp}
-            onPointerCancel={dragHandlers.onPointerCancel}
-            onPointerLeave={dragHandlers.onPointerLeave}
-            onDragStart={dragHandlers.onDragStart}
+            {...trackProps}
+            className="flex cursor-grab select-none active:cursor-grabbing [&_a]:[-webkit-user-drag:none] [&_img]:[-webkit-user-drag:none]"
           >
             {ads.map((ad) => (
-              <div
-                key={ad.id}
-                className="w-full flex-shrink-0 px-2.5 sm:w-1/2 lg:w-1/3"
-              >
+              <div key={ad.id} className={`${SLIDE_BASIS} px-2 sm:px-2.5`}>
                 <ListingCard listing={ad} />
               </div>
             ))}
-            <div className="w-full flex-shrink-0 px-2.5 sm:w-1/2 lg:w-1/3">
+            <div className={`${SLIDE_BASIS} px-2 sm:px-2.5`}>
               <ShowAllCard href={`/listings?sort=${CATEGORY_TO_SORT[activeTab]}`} />
             </div>
           </div>

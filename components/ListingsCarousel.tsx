@@ -16,7 +16,7 @@ interface ListingsCarouselProps {
  * there's no JS copy of these numbers to keep in sync.
  */
 const SLIDE_BASIS =
-  "shrink-0 grow-0 basis-[calc(100%/1.7)] sm:basis-[calc(100%/2.3)] lg:basis-[calc(100%/3.3)] xl:basis-[calc(100%/4.2)]";
+  "min-w-0 shrink-0 grow-0 basis-[calc(100%/1.7)] sm:basis-[calc(100%/2.3)] lg:basis-[calc(100%/3.3)] xl:basis-[calc(100%/4.2)]";
 
 export function ListingsCarousel({
   listings,
