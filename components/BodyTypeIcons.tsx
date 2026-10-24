@@ -25,7 +25,7 @@ const bodyProps = {
 
 export function VanIcon({ className = "h-16 w-auto" }: BodyTypeIconProps) {
   return (
-    <svg className={className} viewBox="0 0 220 100" fill="none">
+    <svg className={className} viewBox="-10 4 220 100" fill="none">
       <path
         {...bodyProps}
         d="M18 66V38a8 8 0 0 1 8-8h134a10 10 0 0 1 9.3 6.3L182 62v4H18Z"
@@ -41,7 +41,7 @@ export function ConvertibleIcon({
   className = "h-16 w-auto",
 }: BodyTypeIconProps) {
   return (
-    <svg className={className} viewBox="0 0 220 100" fill="none">
+    <svg className={className} viewBox="-15 4 220 100" fill="none">
       <path
         {...bodyProps}
         d="M20 66c0-10 8-16 20-19l14-12c8-4 20-6 30-6h44c14 0 28 8 34 20l4 8v9H20Z"
@@ -59,7 +59,7 @@ export function ConvertibleIcon({
 
 export function CoupeIcon({ className = "h-16 w-auto" }: BodyTypeIconProps) {
   return (
-    <svg className={className} viewBox="0 0 220 100" fill="none">
+    <svg className={className} viewBox="-24 5 220 100" fill="none">
       <path
         {...bodyProps}
         d="M18 66c0-9 7-15 18-17l10-15c6-6 15-9 24-9h30c11 0 21 6 26 16l14 17c8 1 14 4 14 8v9H18Z"
@@ -77,7 +77,7 @@ export function CoupeIcon({ className = "h-16 w-auto" }: BodyTypeIconProps) {
 
 export function PickupIcon({ className = "h-16 w-auto" }: BodyTypeIconProps) {
   return (
-    <svg className={className} viewBox="0 0 220 100" fill="none">
+    <svg className={className} viewBox="-27 6 220 100" fill="none">
       <path
         {...bodyProps}
         d="M14 66c0-6 5-10 12-10h6l10-18c5-7 13-11 21-11h20c9 0 17 5 21 13l6 12h14a30 30 0 0 1 22 10l6 4v4H14Z"
@@ -93,7 +93,7 @@ export function CrossoverIcon({
   className = "h-16 w-auto",
 }: BodyTypeIconProps) {
   return (
-    <svg className={className} viewBox="0 0 220 100" fill="none">
+    <svg className={className} viewBox="-24 4 220 100" fill="none">
       <path
         {...bodyProps}
         d="M16 66c0-8 6-13 15-15l9-16c6-7 15-11 24-11h28c10 0 19 5 24 14l10 15c10 1 20 5 26 11l4 3v9H16Z"
